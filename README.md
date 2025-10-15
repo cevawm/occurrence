@@ -7,5 +7,5 @@ planet occurrence rates from radial velocities
 
 This repository contains an implementation of the method described in [Faria,
 Delisle, and Ségransan
-(2025)](https://ui.adsabs.harvard.edu/abs/2025A%26A...590A..30F/abstract) for
+(2025)](https://ui.adsabs.harvard.edu/abs/bibcode/abstract) for
 the calculation of planet occurrence rates from radial-velocity observations.
