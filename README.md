@@ -37,7 +37,17 @@ This class contains only two methods:
 
 The file `occurrence.py` defines a class `occurrence` which calculates the
 posterior distribution for the planet occurrence rate in a given box. It accepts
-as arguments a list of `KimaResults` objects and one or more `Box` objects.
+as arguments a list of `KimaResults` objects and one or more `Box` objects. The
+class has two interesting methods:
+
+- `estimate_posterior`: calculates the posterior distribution for the planet
+  occurrence rate in each box, assuming a uniform prior.
+
+- `posterior_mean_std`: calculates the mean and standard deviation of the 
+  posterior distribution for each box.
+
+
+### Example 
 
 Inside the folder `results5` are some example results obtained with **kima**. These
 correspond to the analysis of the first 5 synthetic datasets presented in the
