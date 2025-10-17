@@ -10,14 +10,18 @@ Delisle, and Ségransan
 (2025)](https://ui.adsabs.harvard.edu/abs/bibcode/abstract) for
 the calculation of planet occurrence rates from radial-velocity observations.
 
-The method is simple, and so is the code.  
+The method is simple, and so is the code. This implementation uses results
+obtained with the [**kima** package](https://github.com/kima-org/kima).
+
+### Usage
+
 The file `box.py` defines a class `Box` that represents the region in orbital
 period and planetary minimum mass for which the planet occurrence rate is
 calculated.
 
 ```py
->>> Box((1, 25), (10, 30))
-Box(period_limits=(1, 25), mass_limits=(10, 30), true_fraction=None, units='earth')
+>>> Box((2, 25), (3, 30))
+Box(period_limits=(2, 25), mass_limits=(3, 30), true_fraction=None, units='earth')
 ```
 
 This class contains only two methods:
@@ -32,4 +36,44 @@ This class contains only two methods:
 
 
 The file `occurrence.py` defines a class `occurrence` which calculates the
-posterior distribution for the planet occurrence rate in a given box.
+posterior distribution for the planet occurrence rate in a given box. It accepts
+as arguments a list of `KimaResults` objects and one or more `Box` objects.
+
+Inside the folder `results5` are some example results obtained with **kima**. These
+correspond to the analysis of the first 5 synthetic datasets presented in the
+paper. 
+
+<details><summary>To load these results</summary>
+
+```py
+from glob import glob
+from multiprocessing import ThreadPool
+
+import kima
+
+with ThreadPool(5) as pool:
+    results = pool.map(kima.load_results, glob('results5/*'))
+```
+
+</details>
+
+To calculate the posterior for the planet occurrence rates in the same regions
+as defined in the paper, use the following code:
+
+
+```py
+>>> R1 = Box((2, 25), (3, 30), true_fraction=0.3)
+>>> R2 = Box((60, 100), (50, 200), true_fraction=0.7)
+>>> R3 = Box((100, 400), (1, 10), true_fraction=0.2)
+
+>>> O = occurrence(results, [R1, R2, R3])
+>>> O.estimate_posterior()
+```
+
+which will reproduce the results shown in Figure 3:
+
+```py
+>>> O.plot()
+```
+
+![plot](occurrence_R123_5stars.png)
