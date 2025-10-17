@@ -14,6 +14,9 @@ class Box:
     true_fraction: float | None = None
     units: str = 'earth'
 
+    def __hash__(self) -> int:
+        return hash((self.period_limits, self.mass_limits))
+
     def calculate_f0(self, res: KimaResults, star_mass: float = 1.0,
                      N: int = 1_000_000):
         """
