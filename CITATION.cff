@@ -1,0 +1,46 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: kima/occurrence
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: João
+    name-particle: P.
+    family-names: Faria
+    email: joao.faria@unige.ch
+    affiliation: Observatoire Astronomique de l’Université de Genève
+    orcid: 'https://orcid.org/0000-0002-6728-244X'
+  - given-names: Jean-Baptiste
+    family-names: Delisle
+    email: Jean-Baptiste.Delisle@unige.ch
+    affiliation: Observatoire Astronomique de l’Université de Genève
+    orcid: 'https://orcid.org/0000-0001-5844-9888'
+  - given-names: Damien
+    family-names: Ségransan
+    email: Damien.Segransan@unige.ch
+    affiliation: Observatoire Astronomique de l’Université de Genève
+    orcid: 'https://orcid.org/0000-0003-2355-8034'
+repository-code: 'https://github.com/kima-org/occurrence'
+url: 'https://www.kima.science'
+repository: 'https://github.com/kima-org/kima'
+abstract: >-
+  We present a new method to determine the posterior
+  distribution for the planet occurrence rate from
+  radial-velocity (RV) observations. The approach combines
+  results from the analysis of individual RV datasets of
+  several stars, using importance sampling to reweight the
+  posterior samples. This bypasses the calculation of
+  detection limits with injection-recovery and does not
+  require the explicit definition of a detection threshold.
+  We demonstrate the method on simulated RV datasets,
+  showing that it recovers unbiased estimates of the
+  occurrence rate in different regions, with increasing
+  precision as more stars are included in the analysis.
+keywords:
+  - exoplanets
+  - radial velocities
+license: MIT
