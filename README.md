@@ -10,8 +10,9 @@ Delisle, and Ségransan
 (2025)](https://ui.adsabs.harvard.edu/abs/bibcode/abstract) for
 the calculation of planet occurrence rates from radial-velocity observations.
 
-The method is simple, and so is the code. This implementation uses results
-obtained with the [**kima** package](https://github.com/kima-org/kima).
+The method is simple, and so is the code.  
+This implementation uses results obtained with the [**kima**
+package](https://github.com/kima-org/kima) and requires that it is installed.
 
 ### Usage
 
