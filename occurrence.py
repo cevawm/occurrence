@@ -37,11 +37,14 @@ class occurrence:
                     self.star_masses.append(res.star_mass)
                 except AttributeError:
                     self.star_masses.append(1.0)
+        else:
+            assert isinstance(self.star_masses, list), "`star_masses` must be a list"
+            assert len(self.star_masses) == len(self.RES), "length of `star_masses` should match length of `RES`"
 
         # calculate fraction of posterior samples inside the box(es)
-        for res in self.RES:
+        for i, res in enumerate(self.RES):
             for box in self.boxes:
-                fraction, _ = box.fraction_inside(res, star_mass=1.0)
+                fraction, _ = box.fraction_inside(res, star_mass=self.star_masses[i])
                 fractions[box].append(fraction)
         # convert to numpy arrays
         for box in self.boxes:
