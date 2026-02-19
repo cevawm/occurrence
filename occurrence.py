@@ -118,6 +118,7 @@ class occurrence:
         import matplotlib.pyplot as plt
         fig, axs = plt.subplots(1, len(self.boxes), constrained_layout=True,
                                 sharey=True, figsize=(len(self.boxes) * 4, 4))
+        axs = np.atleast_1d(axs)
 
         if not hasattr(self, 'normalized_posterior'):
             self.estimate_posterior()
