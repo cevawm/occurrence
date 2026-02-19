@@ -50,20 +50,31 @@ class occurrence:
         for box in self.boxes:
             self.fractions[box] = np.array(fractions[box])
 
-    def estimate_posterior(self, assume_same_star_mass=True):
+    def estimate_posterior(self, assume_same_star_mass=True, N=1_000_000,
+                           cache=False):
         """
         Calculate the posterior distribution for planet occurrence in each box.
         This assumes a uniform prior and calculates the posterior on a grid.
+
+        Args:
+            assume_same_star_mass (bool, optional):
+                If True, assume all stars have the same mass and don't redo the
+                calculation of f0. Defaults to True.
+            N (int, optional):
+                Number of prior samples to compute f0. Defaults to 10^6.
+            cache (bool, optional):
+                If True, cache the prior samples. Only valid if all the priors
+                are the same. Defaults to False.
         """
         self.f = np.linspace(0, 1, 100)
         self.logprior = np.zeros_like(self.f)
         self.loglike = []
         for box in self.boxes:
             if assume_same_star_mass:
-                f0 = box.calculate_f0(self.RES[0])
+                f0 = box.calculate_f0(self.RES[0], N=N, cache=cache)
             else:
                 f0 = np.array([
-                    box.calculate_f0(res, star_mass=star_mass)
+                    box.calculate_f0(res, star_mass=star_mass, N=N, cache=cache)
                     for res, star_mass in zip(self.RES, self.star_masses)
                 ])
             # calculate log likelihood, p( {Dj} | f )
@@ -86,9 +97,14 @@ class occurrence:
         # returns unnormalized posterior
         return self.posterior
 
-    def posterior_mean_std(self):
+    def posterior_mean_std(self, **kwargs):
+        """
+        Calculate the mean and standard deviation of the posterior for planet
+        occurrence in each box. Keyword arguments are passed directly to
+        `estimate_posterior`
+        """
         if not hasattr(self, 'normalized_posterior'):
-            self.estimate_posterior()
+            self.estimate_posterior(**kwargs)
         M, S = [], []
         for i, box in enumerate(self.boxes):
             f, p = self.f, self.normalized_posterior[i]
