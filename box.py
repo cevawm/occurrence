@@ -60,3 +60,15 @@ class Box:
         rect = Rectangle(xy, width, height, **kwargs)
         ax.add_artist(rect)
         return rect
+
+    def show_prior_samples(self, ax, res: KimaResults, all_samples=False, **kwargs):
+        """ Show the prior samples on a matplotlib axis """
+        _, (P, m, cond) = self.calculate_f0(res, full_output=True)
+        kwargs.setdefault('ms', 1)
+        kwargs.setdefault('color', 'k')
+        kwargs.setdefault('alpha', 0.1)
+        if all_samples:
+            ax.plot(P, m, '.', **kwargs)
+        else:
+            ax.plot(P[cond], m[cond], '.', **kwargs)
+        return P, m, cond
