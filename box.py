@@ -13,19 +13,50 @@ class Box:
     mass_limits: tuple
     true_fraction: float | None = None
     units: str = 'earth'
+    _cache = {}
 
     def __hash__(self) -> int:
         return hash((self.period_limits, self.mass_limits))
 
-    def calculate_f0(self, res: KimaResults, star_mass: float = 1.0,
-                     N: int = 1_000_000):
+    def _prior_samples(self, res: KimaResults, N: int = 1_000_000,
+                       cache: bool=False):
+        """ Generate samples from the priors (for f0 calculation)
+
+        Args:
+            res (KimaResults): _kima_ results object containing the priors
+            N (int, optional): Number of prior samples. Defaults to 10^6.
+            cache (bool, optional): If True, cache the prior samples. Defaults to False.
+
+        Returns:
+            tuple: (P, K, e) prior samples
         """
-        Calculate the prior probability for "at least one planet in the box"
-        """
+        if cache and (N, hash(self)) in self._cache:
+            return self._cache[(N, hash(self))]
         # sample from the priors
         P = np.vectorize(res.priors['Pprior'].ppf)(np.random.rand(N))
         K = np.vectorize(res.priors['Kprior'].ppf)(np.random.rand(N))
         e = np.vectorize(res.priors['eprior'].ppf)(np.random.rand(N))
+        if cache:
+            self._cache[(N, hash(self))] = P, K, e
+        return P, K, e
+
+    def calculate_f0(self, res: KimaResults, star_mass: float = 1.0,
+                     N: int = 1_000_000, cache: bool=False,
+                     full_output: bool = False):
+        """
+        Calculate the prior probability for "at least one planet in the box"
+
+        Args:
+            res (KimaResults):
+                _kima_ results object containing the priors
+            N (int, optional):
+                Number of prior samples. Defaults to 10^6.
+            cache (bool, optional):
+                If True, cache the prior samples. Defaults to False.
+            full_output (bool, optional):
+                If True, return the prior samples for period and mass. Defaults to False.
+        """
+        P, K, e = self._prior_samples(res, N, cache=cache)
         # calculate the planet mass
         m = get_planet_mass(P, K, e, star_mass=star_mass, full_output=True)[-1]
         if self.units == 'earth':
@@ -36,6 +67,8 @@ class Box:
         F = cond.sum() / N
         prior_Np = 1 / (res.npmax + 1)
         f0 = 1 - sum([prior_Np * (1 - F) ** Np for Np in range(res.npmax + 1)])
+        if full_output:
+            return (f0, F), (P, m, cond)
         return f0
 
     def fraction_inside(self, res: KimaResults, star_mass: float=1.0):
