@@ -21,6 +21,7 @@ class occurrence:
     RES: list[KimaResults]
     boxes: list[Box]
     star_masses: list[float] | None = None
+    lazy: bool = False
 
     def __post_init__(self):
         if isinstance(self.boxes, Box):
@@ -44,7 +45,7 @@ class occurrence:
         # calculate fraction of posterior samples inside the box(es)
         for i, res in enumerate(self.RES):
             for box in self.boxes:
-                fraction, _ = box.fraction_inside(res, star_mass=self.star_masses[i])
+                fraction, _ = box.fraction_inside(res, star_mass=self.star_masses[i], lazy=self.lazy)
                 fractions[box].append(fraction)
         # convert to numpy arrays
         for box in self.boxes:
@@ -71,10 +72,10 @@ class occurrence:
         self.loglike = []
         for box in self.boxes:
             if assume_same_star_mass:
-                f0 = box.calculate_f0(self.RES[0], N=N, cache=cache)
+                f0 = box.calculate_f0(self.RES[0], N=N, cache=cache, lazy=self.lazy)
             else:
                 f0 = np.array([
-                    box.calculate_f0(res, star_mass=star_mass, N=N, cache=cache)
+                    box.calculate_f0(res, star_mass=star_mass, N=N, cache=cache, lazy=self.lazy)
                     for res, star_mass in zip(self.RES, self.star_masses)
                 ])
             # calculate log likelihood, p( {Dj} | f )

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+import gc
 
 from kima import KimaResults
+import kima
 from kima.pykima.analysis import get_planet_mass
 from kima.pykima.utils import mjup2mearth
 import numpy as np
@@ -42,7 +44,7 @@ class Box:
 
     def calculate_f0(self, res: KimaResults, star_mass: float = 1.0,
                      N: int = 1_000_000, cache: bool=False,
-                     full_output: bool = False):
+                     full_output: bool = False, lazy: bool = False):
         """
         Calculate the prior probability for "at least one planet in the box"
 
@@ -56,7 +58,16 @@ class Box:
             full_output (bool, optional):
                 If True, return the prior samples for period and mass. Defaults to False.
         """
-        P, K, e = self._prior_samples(res, N, cache=cache)
+        if isinstance(res, str) and lazy:
+            res = kima.load_results(res)
+            P, K, e = self._prior_samples(res, N, cache=cache)
+            npmax = res.npmax
+            del res
+            gc.collect()
+        else:
+            P, K, e = self._prior_samples(res, N, cache=cache)
+            npmax = res.npmax
+        # P, K, e = self._prior_samples(res, N, cache=cache)
         # calculate the planet mass
         m = get_planet_mass(P, K, e, star_mass=star_mass, full_output=True)[-1]
         if self.units == 'earth':
@@ -65,23 +76,34 @@ class Box:
         cond = (m > self.mass_limits[0]) & (m < self.mass_limits[1])
         cond &= (P > self.period_limits[0]) & (P < self.period_limits[1])
         F = cond.sum() / N
-        prior_Np = 1 / (res.npmax + 1)
-        f0 = 1 - sum([prior_Np * (1 - F) ** Np for Np in range(res.npmax + 1)])
+        prior_Np = 1 / (npmax + 1)
+        f0 = 1 - sum([prior_Np * (1 - F) ** Np for Np in range(npmax + 1)])
         if full_output:
             return (f0, F), (P, m, cond)
         return f0
 
-    def fraction_inside(self, res: KimaResults, star_mass: float=1.0):
+    def fraction_inside(self, res: KimaResults, star_mass: float=1.0, lazy: bool = False):
         """ Calculate the fraction of posterior samples inside the box """
-        P = res.posteriors.P
-        m = res.posteriors.msini(star_mass=star_mass, units=self.units)
+        if isinstance(res, str) and lazy:
+            res = kima.load_results(res)
+            P = res.posteriors.P
+            m = res.posteriors.msini(star_mass=star_mass, units=self.units)
+            ESS = res.ESS
+            del res
+            gc.collect()
+        else:
+            P = res.posteriors.P
+            m = res.posteriors.msini(star_mass=star_mass, units=self.units)
+            ESS = res.ESS
+        # P = res.posteriors.P
+        # m = res.posteriors.msini(star_mass=star_mass, units=self.units)
         # check if inside the box
         cond = (m > self.mass_limits[0]) & (m < self.mass_limits[1])
         cond &= (P > self.period_limits[0]) & (P < self.period_limits[1])
         # "at least one planet"
         nsamples = cond.any(axis=1).sum()
         # fraction of all posterior samples
-        fraction = nsamples / res.ESS
+        fraction = nsamples / ESS
         return fraction, cond
 
     def show(self, ax, **kwargs):
