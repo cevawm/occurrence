@@ -283,7 +283,7 @@ class occurrence_with_limit:
 
         instance = cls(RES, boxes, star_masses)
         instance._parquet = True
-        instance.compute_fractions()
+        
         return instance
 
     def __post_init__(self):
