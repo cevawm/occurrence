@@ -144,6 +144,7 @@ class Box:
             if lazy:
                 res = kima.load_results(res)
                 P = res.posteriors.P
+                K = res.posteriors.K
                 m = res.posteriors.msini(star_mass=star_mass, units=self.units)
                 ESS = res.ESS
                 del res
@@ -175,7 +176,7 @@ class Box:
             cond_sens = cond & (K < sensitivity_limit)
             cond = (cond, cond_sens)
 
-        return fraction, cond
+        return fraction, cond, ESS
 
     def show(self, ax, sma=False, semi_amplitude=False, star_mass=1.0,
              **kwargs):

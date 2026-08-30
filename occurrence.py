@@ -77,14 +77,14 @@ class occurrence:
         for box in self.boxes:
             print(f'computing f0 for {box}')
             if assume_same_star_mass:
-                f0 = box.calculate_f0(RES[0], **kw)
+                f0 = box.calculate_f0(RES[0], lazy=self.lazy, **kw)
                 self.f0[box] = f0
             else:
                 pbar = tqdm(zip(RES, self.star_masses), total=len(RES))
                 f0 = []
                 for obj in pbar:
                     res, star_mass = obj
-                    f0.append(box.calculate_f0(res, star_mass=star_mass, **kw))
+                    f0.append(box.calculate_f0(res, star_mass=star_mass, lazy=self.lazy, **kw))
                 self.f0[box] = np.array(f0)
 
 
@@ -98,7 +98,7 @@ class occurrence:
         fractions = defaultdict(list)
         for i, res in tqdm(enumerate(RES), total=len(RES)):
             for box in self.boxes:
-                fraction, cond = box.fraction_inside(res, star_mass=self.star_masses[i], lazy=self.lazy)
+                fraction, cond, _ = box.fraction_inside(res, star_mass=self.star_masses[i], lazy=self.lazy)
                 fractions[box].append(fraction)
         # convert to numpy arrays
         for box in self.boxes:
@@ -333,7 +333,7 @@ class occurrence_with_limit:
         for box in self.boxes:
             print(f'computing f0 for {box}')
             if assume_same_star_mass:
-                f0, f0_sens = box.calculate_f0(RES[0], sensitivity_limit=self.sensitivity_limits[0], **kw)
+                f0, f0_sens = box.calculate_f0(RES[0], sensitivity_limit=self.sensitivity_limits[0], lazy=self.lazy, **kw)
                 self.f0_sens[box] = np.full(self.NR, f0_sens)
                 self.f0[box] = np.full(self.NR, f0)
             else:
@@ -341,7 +341,7 @@ class occurrence_with_limit:
                 f0, f0_sens = [], []
                 for obj in pbar:
                     res, star_mass, sensitivity_limit = obj
-                    _f0, _f0_sens = box.calculate_f0(res, star_mass=star_mass, sensitivity_limit=sensitivity_limit, **kw)
+                    _f0, _f0_sens = box.calculate_f0(res, star_mass=star_mass, sensitivity_limit=sensitivity_limit, lazy=self.lazy, **kw)
                     f0.append(_f0)
                     f0_sens.append(_f0_sens)
                 self.f0_sens[box] = np.array(f0_sens)
@@ -358,7 +358,7 @@ class occurrence_with_limit:
         fractions = defaultdict(list)
         for i, res in tqdm(enumerate(RES), total=len(RES)):
             for box in self.boxes:
-                fraction, cond = box.fraction_inside(
+                fraction, cond, ESS = box.fraction_inside(
                     res, 
                     star_mass=self.star_masses[i],
                     sensitivity_limit=self.sensitivity_limits[i],
@@ -369,7 +369,7 @@ class occurrence_with_limit:
                 # print(f'ratio={ratio}')
                 contrib = cond.any(axis=1).astype(float)
                 contrib[cond_sens.any(axis=1)] = ratio
-                fraction = contrib.sum() / res.ESS
+                fraction = contrib.sum() / ESS
 
                 fractions[box].append(fraction)
 
