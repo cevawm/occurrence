@@ -1,6 +1,9 @@
 from dataclasses import dataclass
+import gc
+from linecache import cache
 
 from kima import KimaResults
+import kima
 from kima.pykima.analysis import get_planet_mass, get_planet_semimajor_axis
 from kima.pykima.utils import mjup2mearth, get_semi_amplitude
 import numpy as np
@@ -75,7 +78,7 @@ class Box:
     def calculate_f0(self, res: KimaResults | str, star_mass: float = 1.0,
                      N: int = 1_000_000, cache: bool=False,
                      sensitivity_limit: float | None = None,
-                     full_output: bool = False):
+                     full_output: bool = False, lazy: bool = False):
         """
         Calculate the prior probability for "at least one planet in the box"
 
@@ -91,17 +94,24 @@ class Box:
                 If True, return the prior samples for period and mass. Defaults to False.
         """
         if isinstance(res, str):
-            import pandas as pd
-            prior_samples = pd.read_parquet(
-                res,
-                filters=[
-                    ("P", ">", self.period_limits[0]),
-                    ("P", "<", self.period_limits[1]),
-                ],
-            )
-            npmax = prior_samples.attrs['npmax']
-            N = prior_samples.attrs['N']
-            P, K, e, star_mass = prior_samples.to_numpy().T
+            if lazy:
+                res = kima.load_results(res)
+                P, K, e = self._prior_samples(res, N, cache=cache)
+                npmax = res.npmax
+                del res
+                gc.collect()
+            else:
+                import pandas as pd
+                prior_samples = pd.read_parquet(
+                    res,
+                    filters=[
+                        ("P", ">", self.period_limits[0]),
+                        ("P", "<", self.period_limits[1]),
+                    ],
+                )
+                npmax = prior_samples.attrs['npmax']
+                N = prior_samples.attrs['N']
+                P, K, e, star_mass = prior_samples.to_numpy().T
         else:
             P, K, e = self._prior_samples(res, N, cache=cache)
             npmax = res.npmax
@@ -128,18 +138,26 @@ class Box:
         return f0
 
     def fraction_inside(self, res: KimaResults | str, star_mass: float=1.0,
-                        sensitivity_limit: float | None = None):
+                        sensitivity_limit: float | None = None, lazy: bool = False):
         """ Calculate the fraction of posterior samples inside the box """
         if isinstance(res, str):
-            import pandas as pd
-            df = pd.read_parquet(res)
-            P = df[df.columns[df.attrs['indices']['planets.P']]].to_numpy()
-            K = df[df.columns[df.attrs['indices']['planets.K']]].to_numpy()
-            e = df[df.columns[df.attrs['indices']['planets.e']]].to_numpy()
-            m = get_planet_mass(P, K, e, star_mass=star_mass, full_output=True)[-1]
-            if self.units == 'earth':
-                m *= mjup2mearth
-            ESS = df.shape[0]
+            if lazy:
+                res = kima.load_results(res)
+                P = res.posteriors.P
+                m = res.posteriors.msini(star_mass=star_mass, units=self.units)
+                ESS = res.ESS
+                del res
+                gc.collect()
+            else:
+                import pandas as pd
+                df = pd.read_parquet(res)
+                P = df[df.columns[df.attrs['indices']['planets.P']]].to_numpy()
+                K = df[df.columns[df.attrs['indices']['planets.K']]].to_numpy()
+                e = df[df.columns[df.attrs['indices']['planets.e']]].to_numpy()
+                m = get_planet_mass(P, K, e, star_mass=star_mass, full_output=True)[-1]
+                if self.units == 'earth':
+                    m *= mjup2mearth
+                ESS = df.shape[0]
         else:
             P = res.posteriors.P
             K = res.posteriors.K

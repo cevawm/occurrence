@@ -18,11 +18,15 @@ class occurrence:
             List of results objects from kima
         boxes (list):
             List of Box objects representing the regions in orbital period and
-            planetary mass
+            planetary mass.
+        lazy (bool, optional):
+            If True, assume the results are saved in a pickle format, and load 
+            them in a RAM-efficient manner. Defaults to False.
     """
     RES: list[KimaResults | str]
     boxes: list[Box]
     star_masses: list[float] | None = None
+    lazy: bool = False
     _parquet = False
 
     @classmethod
@@ -94,7 +98,7 @@ class occurrence:
         fractions = defaultdict(list)
         for i, res in tqdm(enumerate(RES), total=len(RES)):
             for box in self.boxes:
-                fraction, cond = box.fraction_inside(res, star_mass=self.star_masses[i])
+                fraction, cond = box.fraction_inside(res, star_mass=self.star_masses[i], lazy=self.lazy)
                 fractions[box].append(fraction)
         # convert to numpy arrays
         for box in self.boxes:
@@ -260,11 +264,15 @@ class occurrence_with_limit:
         boxes (list):
             List of Box objects representing the regions in orbital period and
             planetary mass
+        lazy (bool, optional):
+            If True, assume the results are saved in a pickle format, and load 
+            them in a RAM-efficient manner. Defaults to False.
     """
     RES: list[KimaResults | str]
     boxes: list[Box]
     star_masses: list[float] | None = None
     sensitivity_limits: list[float] | None = None
+    lazy: bool = False
     _parquet = False
 
     @classmethod
@@ -353,7 +361,8 @@ class occurrence_with_limit:
                 fraction, cond = box.fraction_inside(
                     res, 
                     star_mass=self.star_masses[i],
-                    sensitivity_limit=self.sensitivity_limits[i]
+                    sensitivity_limit=self.sensitivity_limits[i],
+                    lazy=self.lazy
                 )
                 cond, cond_sens = cond
                 ratio = self.f0_sens[box][i] / self.f0[box][i]
