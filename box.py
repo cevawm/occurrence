@@ -111,7 +111,7 @@ class Box:
                 )
                 npmax = prior_samples.attrs['npmax']
                 N = prior_samples.attrs['N']
-                P, K, e, star_mass = prior_samples.to_numpy().T
+                P, K, e = prior_samples.to_numpy().T
         else:
             P, K, e = self._prior_samples(res, N, cache=cache)
             npmax = res.npmax
