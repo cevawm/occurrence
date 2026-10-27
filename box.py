@@ -11,12 +11,13 @@ class Box:
     """ A box in orbital period and planetary mass """
     period_limits: tuple
     mass_limits: tuple
+    eccentricity_limits: tuple
     true_fraction: float | None = None
     units: str = 'earth'
     _cache = {}
 
     def __hash__(self) -> int:
-        return hash((self.period_limits, self.mass_limits))
+        return hash((self.period_limits, self.mass_limits, self.eccentricity_limits))
 
     def _prior_samples(self, res: KimaResults, N: int = 1_000_000,
                        cache: bool=False):
@@ -64,20 +65,23 @@ class Box:
         # check if inside the box
         cond = (m > self.mass_limits[0]) & (m < self.mass_limits[1])
         cond &= (P > self.period_limits[0]) & (P < self.period_limits[1])
+        cond &= (e > self.eccentricity_limits[0]) & (e < self.eccentricity_limits[1])
         F = cond.sum() / N
         prior_Np = 1 / (res.npmax + 1)
         f0 = 1 - sum([prior_Np * (1 - F) ** Np for Np in range(res.npmax + 1)])
         if full_output:
-            return (f0, F), (P, m, cond)
+            return (f0, F), (P, m, e, cond)
         return f0
 
     def fraction_inside(self, res: KimaResults, star_mass: float=1.0):
         """ Calculate the fraction of posterior samples inside the box """
         P = res.posteriors.P
         m = res.posteriors.msini(star_mass=star_mass, units=self.units)
+        e = res.posteriors.e
         # check if inside the box
         cond = (m > self.mass_limits[0]) & (m < self.mass_limits[1])
         cond &= (P > self.period_limits[0]) & (P < self.period_limits[1])
+        cond &= (e > self.eccentricity_limits[0]) & (e < self.eccentricity_limits[1])
         # "at least one planet"
         nsamples = cond.any(axis=1).sum()
         # fraction of all posterior samples
@@ -96,12 +100,12 @@ class Box:
 
     def show_prior_samples(self, ax, res: KimaResults, all_samples=False, **kwargs):
         """ Show the prior samples on a matplotlib axis """
-        _, (P, m, cond) = self.calculate_f0(res, full_output=True)
+        _, (P, m, e, cond) = self.calculate_f0(res, full_output=True)
         kwargs.setdefault('ms', 1)
         kwargs.setdefault('color', 'k')
         kwargs.setdefault('alpha', 0.1)
         if all_samples:
-            ax.plot(P, m, '.', **kwargs)
+            ax.plot(P, m, '.', **kwargs)  #probably should also plot the e vs P, but not a priority
         else:
             ax.plot(P[cond], m[cond], '.', **kwargs)
-        return P, m, cond
+        return P, m, e, cond

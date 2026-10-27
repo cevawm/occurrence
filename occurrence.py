@@ -135,7 +135,8 @@ class occurrence:
             ax.legend([label, 'prior', 'truth'])
             ax.set_title(
                 r'$P \in$' + f'{box.period_limits} d' + '\n' + 
-                r'$m \in$' + f'{box.mass_limits}' + f' {box.units} mass',
+                r'$m \in$' + f'{box.mass_limits}' + f' {box.units} mass' + '\n' +
+                r'$e \in$' + f'{box.eccentricity_limits}',
                 loc='left'
             )
             ax.minorticks_on()
