@@ -23,7 +23,8 @@ class Box:
         with np.printoptions(precision=3):
             p = f'period_limits={np.array(self.period_limits)}'
             m = f'mass_limits={np.array(self.mass_limits)}'
-        return f"Box({p}, {m})"
+            e = f'eccentricity_limits={np.array(self.eccentricity_limits)}'
+        return f"Box({p}, {m}, {e})"
 
     def __hash__(self) -> int:
         return hash((self.period_limits, self.mass_limits, self.eccentricity_limits))
